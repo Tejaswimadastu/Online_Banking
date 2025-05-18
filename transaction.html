@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            margin: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 25px;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .balance {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            color: #28a745;
+        }
+
+        .transactions {
+            margin-top: 25px;
+        }
+
+        .transactions h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .transactions ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .transactions li {
+            background-color: #e9f5ff;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .transactions li.withdraw {
+            background-color: #ffe3e3;
+        }
+
+        .transactions li.transfer {
+            background-color: #fff3cd;
+        }
+
+        .chart-container {
+            margin-top: 25px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .logout-btn {
+            background-color: #dc3545 !important;
+            margin-top: 15px;
+        }
+
+        .logout-btn:hover {
+            background-color: #c82333 !important;
+        }
+
+        .download-btn {
+            background-color: #17a2b8 !important;
+            margin-top: 15px;
+        }
+
+        .download-btn:hover {
+            background-color: #138496 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Bank Transactions</h2>
+        <div class="balance">Current Balance: ₹<span id="balance">0</span></div>
+
+        <label>Transaction Type:</label>
+        <select id="transactionType" onchange="toggleTransferFields()">
+            <option value="deposit">Deposit</option>
+            <option value="withdraw">Withdraw</option>
+            <option value="transfer">Transfer</option>
+        </select>
+
+        <label>Amount (₹):</label>
+        <input type="number" id="amount" min="1" placeholder="Enter amount" />
+
+        <div id="transferFields" style="display: none;">
+            <label>Recipient Account Number:</label>
+            <input type="text" id="recipientAccount" placeholder="Enter recipient account number" />
+        </div>
+
+        <button onclick="performTransaction()">Submit</button>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+        <button class="download-btn" onclick="downloadTransactions()">Download Transactions</button>
+
+        <div class="transactions">
+            <h3>Transaction History</h3>
+            <ul id="transactionHistory"></ul>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="transactionChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Firebase Config -->
+    <script type="module" src="firebase-config.js"></script>
+    <!-- Transaction Logic -->
+    <script type="module" src="auth-transaction.js"></script>
+
+    <!-- Main Script -->
+    <script>
+        const REGISTERED_ACCOUNTS = ["1234567890", "2345678901", "3456789012", "4567890123"];
+        let balance = 0;
+        let transactionData = [];
+        let transactionLabels = [];
+        let transactionChart;
+        let currentAccount = null;
+
+        function initializeUser() {
+            balance = 0;
+            transactionData = [];
+            transactionLabels = [];
+            
+            currentAccount = localStorage.getItem("currentAccount");
+            if (!currentAccount) {
+                alert("Please log in first.");
+                window.location.href = "login.html";
+                return;
+            }
+            
+            loadUserData();
+        }
+
+        function getUserTransactionsKey() {
+            return `transactions_${currentAccount}`;
+        }
+
+        function getUserBalanceKey() {
+            return `balance_${currentAccount}`;
+        }
+
+        function loadUserData() {
+            transactionData = [];
+            transactionLabels = [];
+            
+            const savedTransactions = JSON.parse(localStorage.getItem(getUserTransactionsKey())) || [];
+            const savedBalance = parseFloat(localStorage.getItem(getUserBalanceKey())) || 0;
+
+            balance = savedBalance;
+            document.getElementById("balance").innerText = balance.toFixed(2);
+
+            const historyList = document.getElementById("transactionHistory");
+            historyList.innerHTML = "";
+            
+            savedTransactions.forEach(transaction => {
+                const transactionItem = document.createElement("li");
+                transactionItem.innerText = `${transaction.type}: ₹${transaction.amount}${transaction.recipientAccount ? ` to ${transaction.recipientAccount}` : ''} (${transaction.timestamp})`;
+                transactionItem.classList.add(transaction.type);
+                historyList.appendChild(transactionItem);
+
+                transactionData.push(transaction.amount * (transaction.type === "deposit" ? 1 : -1));
+                transactionLabels.push(transaction.timestamp);
+            });
+
+            updateChart();
+        }
+
+        function saveTransactions(type, amount, recipientAccount = null) {
+            const transaction = {
+                type,
+                amount,
+                timestamp: new Date().toLocaleString(),
+                recipientAccount
+            };
+
+            const savedTransactions = JSON.parse(localStorage.getItem(getUserTransactionsKey())) || [];
+            savedTransactions.push(transaction);
+            
+            localStorage.setItem(getUserTransactionsKey(), JSON.stringify(savedTransactions));
+            localStorage.setItem(getUserBalanceKey(), balance);
+        }
+
+        function toggleTransferFields() {
+            const transactionType = document.getElementById("transactionType").value;
+            const transferFields = document.getElementById("transferFields");
+            transferFields.style.display = transactionType === "transfer" ? "block" : "none";
+        }
+
+        window._originalPerformTransaction = function() {
+            const type = document.getElementById("transactionType").value;
+            const amount = parseFloat(document.getElementById("amount").value);
+            const recipientAccount = document.getElementById("recipientAccount").value;
+
+            const historyList = document.getElementById("transactionHistory");
+            const transactionItem = document.createElement("li");
+
+            switch (type) {
+                case "deposit":
+                    balance += amount;
+                    transactionItem.innerText = `Deposit: ₹${amount.toFixed(2)}`;
+                    transactionItem.classList.add("deposit");
+                    transactionData.push(amount);
+                    break;
+                case "withdraw":
+                    balance -= amount;
+                    transactionItem.innerText = `Withdraw: ₹${amount.toFixed(2)}`;
+                    transactionItem.classList.add("withdraw");
+                    transactionData.push(-amount);
+                    break;
+                case "transfer":
+                    balance -= amount;
+                    transactionItem.innerText = `Transfer to ${recipientAccount}: ₹${amount.toFixed(2)}`;
+                    transactionItem.classList.add("transfer");
+                    transactionData.push(-amount);
+                    break;
+            }
+
+            const timestamp = new Date().toLocaleString();
+            transactionItem.innerText += ` (${timestamp})`;
+            historyList.appendChild(transactionItem);
+            
+            document.getElementById("balance").innerText = balance.toFixed(2);
+            transactionLabels.push(timestamp);
+            updateChart();
+
+            saveTransactions(type, amount, recipientAccount);
+            document.getElementById("amount").value = "";
+            if (type === "transfer") {
+                document.getElementById("recipientAccount").value = "";
+            }
+            
+            alert("Transaction Successful!");
+        };
+
+        function updateChart() {
+            const ctx = document.getElementById("transactionChart").getContext("2d");
+            if (transactionChart) {
+                transactionChart.destroy();
+            }
+            
+            transactionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: transactionLabels,
+                    datasets: [{
+                        label: 'Transaction Amount',
+                        data: transactionData,
+                        borderColor: '#007bff',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem("currentAccount");
+            window.location.href = "login.html";
+        }
+
+        function downloadTransactions() {
+            const savedTransactions = JSON.parse(localStorage.getItem(getUserTransactionsKey())) || [];
+            const savedBalance = parseFloat(localStorage.getItem(getUserBalanceKey())) || 0;
+            
+            let content = `Transaction Statement for Account: ${currentAccount}\n`;
+            content += `Current Balance: ₹${savedBalance.toFixed(2)}\n\n`;
+            content += `Date & Time\t\tType\t\tAmount\t\tRecipient\n`;
+            content += `------------------------------------------------------------\n`;
+            
+            savedTransactions.forEach(transaction => {
+                content += `${transaction.timestamp}\t${transaction.type}\t₹${transaction.amount.toFixed(2)}\t${transaction.recipientAccount || '-'}\n`;
+            });
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transactions_${currentAccount}_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        window.onload = initializeUser;
+    </script>
+</body>
+</html>

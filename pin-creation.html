@@ -1,0 +1,50 @@
+// pin-creation.js
+import { db } from './firebase.js';
+import { collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const pinForm = document.getElementById('pinForm');
+const errorMessage = document.getElementById('error-message');
+const loadingSpinner = document.getElementById('loadingSpinner');
+
+pinForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const accountNumber = document.getElementById('accountNumber').value.trim();
+  const pin = document.getElementById('pin').value.trim();
+  const confirmPin = document.getElementById('confirmPin').value.trim();
+
+  errorMessage.style.display = 'none';
+
+  if (!/^\d{4,6}$/.test(pin)) {
+    errorMessage.textContent = 'PIN must be 4 to 6 digits.';
+    errorMessage.style.display = 'block';
+    return;
+  }
+
+  if (pin !== confirmPin) {
+    errorMessage.textContent = 'PINs do not match.';
+    errorMessage.style.display = 'block';
+    return;
+  }
+
+  try {
+    loadingSpinner.style.display = 'block';
+
+    await addDoc(collection(db, 'userPins'), {
+      accountNumber,
+      pin, // ⚠️ Consider hashing in real apps
+      createdAt: new Date()
+    });
+
+    loadingSpinner.textContent = 'PIN created successfully! Redirecting...';
+    
+    setTimeout(() => {
+      window.location.href = 'login.html'; // Update with your actual login page filename
+    }, 1500);
+  } catch (error) {
+    console.error("Error writing document: ", error);
+    errorMessage.textContent = 'Error saving data. Please try again.';
+    errorMessage.style.display = 'block';
+    loadingSpinner.style.display = 'none';
+  }
+});

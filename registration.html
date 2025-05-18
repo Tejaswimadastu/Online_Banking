@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Account Registration Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #error-message {
+            color: red;
+            text-align: center;
+            display: none;
+            margin-top: 10px;
+        }
+
+        .forgot-links {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .forgot-links a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .forgot-links a:hover {
+            text-decoration: underline;
+        }
+
+        .clear-button {
+            background-color: #f44336;
+        }
+
+        .clear-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <form id="registrationForm">
+            <h2>Bank Account Registration Form</h2>
+            
+            <div class="form-group">
+                <label for="fullName">Name*:</label>
+                <input type="text" id="fullName" placeholder="Full Name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-mail*:</label>
+                <input type="email" id="email" placeholder="Enter Email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phoneNumber">Phone Number*:</label>
+                <input type="tel" id="phoneNumber" placeholder="Enter Phone Number" required>
+            </div>
+
+            <div class="form-group">
+                <label for="pincode">PIN Code*:</label>
+                <input type="text" id="pincode" placeholder="Enter PIN Code" required>
+                <button type="button" onclick="fetchLocation()">Get Location</button>
+            </div>
+
+            <div class="form-group">
+                <label for="city">City*:</label>
+                <input type="text" id="city" placeholder="City" required readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="state">State*:</label>
+                <input type="text" id="state" placeholder="State" required readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country*:</label>
+                <input type="text" id="country" placeholder="Country" required readonly>
+            </div>
+
+            <button type="submit">Submit</button>
+            <button type="button" class="clear-button" onclick="clearForm()">Clear Form</button>
+            <div id="error-message"></div>
+            <div class="loading-spinner" id="loadingSpinner">Loading...</div>
+
+            <div class="forgot-links">
+                <a href="#" onclick="forgotAccountNumber()">Forgot Account Number?</a> | 
+                <a href="#" onclick="forgotPin()">Forgot PIN?</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        async function fetchLocation() {
+            const pincode = document.getElementById("pincode").value.trim();
+            if (!pincode) {
+                showError("Please enter a PIN code.");
+                return;
+            }
+
+            if (pincode.length !== 6 || isNaN(pincode)) {
+                showError("Please enter a valid 6-digit PIN code.");
+                return;
+            }
+
+            document.getElementById("loadingSpinner").style.display = "block";
+
+            try {
+                let response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+                let data = await response.json();
+
+                if (data[0].Status === "Success" && data[0].PostOffice) {
+                    document.getElementById("city").value = data[0].PostOffice[0].District || "";
+                    document.getElementById("state").value = data[0].PostOffice[0].State || "";
+                    document.getElementById("country").value = "India";
+                } else {
+                    showError("No location found for this PIN code.");
+                }
+            } catch (error) {
+                console.error("Error fetching location:", error);
+                showError("Failed to fetch location. Try again.");
+            } finally {
+                document.getElementById("loadingSpinner").style.display = "none";
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById("error-message");
+            errorEl.innerText = message;
+            errorEl.style.display = "block";
+        }
+
+        function clearForm() {
+            document.getElementById("registrationForm").reset();
+            document.getElementById("error-message").style.display = "none";
+        }
+    </script>
+
+    <!-- Firebase Config -->
+    <script type="module" src="firebase-config.js"></script>
+    <!-- Custom Auth Logic -->
+    <script type="module" src="auth-registration.js"></script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+//server.js
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
+
+const app = express();
+const PORT = 5000;
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// File path for storing data
+const dataFilePath = path.join(__dirname, "users.json");
+
+// Load existing users from file
+let users = [];
+if (fs.existsSync(dataFilePath)) {
+    const data = fs.readFileSync(dataFilePath, "utf8");
+    users = JSON.parse(data);
+}
+
+// Endpoint to handle registration
+app.post("/register", (req, res) => {
+    const { fullName, email, phoneNumber, pincode, city, state, country } = req.body;
+
+    // Validate required fields
+    if (!fullName || !email || !phoneNumber || !pincode || !city || !state || !country) {
+        return res.status(400).json({ error: "All fields are required." });
+    }
+
+    // Check if user already exists
+    const existingUser = users.find(
+        (user) => user.email === email || user.phoneNumber === phoneNumber
+    );
+    if (existingUser) {
+        return res.status(400).json({ error: "User already registered." });
+    }
+
+    // Generate a random account number
+    const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000);
+
+    // Create new user object
+    const newUser = {
+        fullName,
+        email,
+        phoneNumber,
+        pincode,
+        city,
+        state,
+        country,
+        accountNumber,
+    };
+
+    // Add user to the list
+    users.push(newUser);
+
+    // Save users to file
+    fs.writeFileSync(dataFilePath, JSON.stringify(users, null, 2));
+
+    // Send success response
+    res.status(201).json({
+        message: "Registration successful!",
+        accountNumber,
+    });
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});

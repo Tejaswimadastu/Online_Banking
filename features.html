@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features - Online Banking System</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* General Reset */
+        body, h1, h2, h3, p, ul {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Body and Background */
+        body {
+            background-color: #f4f4f4;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Features Section */
+        #features {
+            padding: 60px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #0077cc, #00bcd4);
+            color: white;
+        }
+
+        #features h2 {
+            font-size: 36px;
+            margin-bottom: 40px;
+            font-weight: bold;
+        }
+
+        #features ul {
+            list-style-type: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #features li {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #features li:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #features h3 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #features h3 i {
+            margin-right: 10px;
+            color: #0077cc;
+        }
+
+        #features p {
+            font-size: 16px;
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #features h2 {
+                font-size: 28px;
+            }
+
+            #features h3 {
+                font-size: 20px;
+            }
+
+            #features p {
+                font-size: 14px;
+            }
+
+            #features ul {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Features Section -->
+<section id="features">
+    <h2>Our Features</h2>
+    <ul>
+        <li>
+            <h3><i class="fas fa-shield-alt"></i>Secure Banking</h3>
+            <p>Experience top-notch security features like two-factor authentication and encryption to protect your accounts and transactions.</p>
+        </li>
+        <li>
+            <h3><i class="fas fa-mobile-alt"></i>Mobile Banking</h3>
+            <p>Access your account and manage finances anytime, anywhere with our easy-to-use mobile app.</p>
+        </li>
+        <li>
+            <h3><i class="fas fa-chart-line"></i>Transaction Visualization</h3>
+            <p>Track your spending habits with intuitive visualizations and graphs, making financial management easier.</p>
+        </li>
+        <li>
+            <h3><i class="fas fa-wallet"></i>Instant Bank Account Creation</h3>
+            <p>Open a bank account instantly online with minimal paperwork and hassle.</p>
+        </li>
+        <li>
+            <h3><i class="fas fa-chart-pie"></i>Budget Planning</h3>
+            <p>Create budgets and track your financial goals using our automated tools.</p>
+        </li>
+        <li>
+            <h3><i class="fas fa-bell"></i>Real-Time Alerts</h3>
+            <p>Get instant notifications for transactions, low balances, and suspicious activities.</p>
+        </li>
+    </ul>
+</section>
+
+</body>
+</html>
